@@ -2,7 +2,6 @@
 	single linked list merge
 	This problem requires you to merge two ordered singly linked lists into one ordered singly linked list
 */
-// I AM NOT DONE
 
 use std::fmt::{self, Display, Formatter};
 use std::ptr::NonNull;
@@ -14,7 +13,9 @@ struct Node<T> {
     next: Option<NonNull<Node<T>>>,
 }
 
-impl<T> Node<T> {
+impl<T> Node<T> 
+where T: std::cmp::PartialOrd
+{
     fn new(t: T) -> Node<T> {
         Node {
             val: t,
@@ -29,13 +30,17 @@ struct LinkedList<T> {
     end: Option<NonNull<Node<T>>>,
 }
 
-impl<T> Default for LinkedList<T> {
+impl<T> Default for LinkedList<T> 
+where T: std::cmp::PartialOrd
+{
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T> LinkedList<T> {
+impl<T> LinkedList<T> 
+where T: std::cmp::PartialOrd
+{
     pub fn new() -> Self {
         Self {
             length: 0,
@@ -72,11 +77,43 @@ impl<T> LinkedList<T> {
 	pub fn merge(list_a:LinkedList<T>,list_b:LinkedList<T>) -> Self
 	{
 		//TODO
-		Self {
-            length: 0,
-            start: None,
-            end: None,
+        match (list_a.start, list_b.start) {
+            (None, None) => {
+                Self {
+                    length: 0,
+                    start: None,
+                    end: None,
+                }
+            },
+            (Some(next_ptr_a), None) => {
+                list_a
+            },
+            (None, Some(next_ptr_b)) => {
+                list_b
+            },
+            (Some(next_ptr_a), Some(next_ptr_b)) => {
+                let node_a = unsafe { &(*next_ptr_a.as_ptr())};
+                let node_b = unsafe { &(*next_ptr_b.as_ptr())};
+                if node_a.val > node_b.val {
+                    let mut new_list_b = list_b;
+                    new_list_b.start = node_b.next;
+                    let mut list_c = Self::merge(list_a, new_list_b);
+                    unsafe{ (*next_ptr_b.as_ptr()).next = list_c.start};
+                    list_c.start = Some(next_ptr_b);
+                    list_c
+                } else {
+                    let mut new_list_a = list_a;
+                    new_list_a.start = node_a.next;
+                    let mut list_c = Self::merge(new_list_a, list_b);
+                    unsafe{ (*next_ptr_a.as_ptr()).next = list_c.start};
+                    list_c.start = Some(next_ptr_a);
+                    list_c
+                }
+
+            }
+
         }
+        
 	}
 }
 
